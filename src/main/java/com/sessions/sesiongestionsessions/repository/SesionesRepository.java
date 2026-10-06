@@ -19,4 +19,6 @@ public interface SesionesRepository extends JpaRepository<Sesiones, Long> {
             @Param("fechaInicio") LocalDateTime fechaInicio,
             @Param("fechaFin") LocalDateTime fechaFin
     );
+
+    List<Sesiones> findByEstado(Sesiones.Estado estado);
 }

@@ -15,18 +15,30 @@ public class Usuario {
     @Column(nullable = false)
     private String nombre;
 
+    @Column
+    private String apellido;
+
     @Column(nullable = false, unique = true)
     private String correo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Rol rol;
+    @Column
+    private String contrasena;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rol_acceso")
+    private RolAcceso rolAcceso;
+
+    public enum RolAcceso {
+        ADMIN, COORDINADOR, INGENIERO, ESPECTADOR
+    }
 
     public enum Rol {
         TECNICO,
-        INGENIERO
+        INGENIERO;
     }
-
     public Usuario() {
     }
 
@@ -53,12 +65,36 @@ public class Usuario {
         this.nombre = nombre;
     }
 
+    public String getApellido() {
+        return apellido;
+    }
+
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
+
     public String getCorreo() {
         return correo;
     }
 
     public void setCorreo(String correo) {
         this.correo = correo;
+    }
+
+    public String getContrasena() {
+        return contrasena;
+    }
+
+    public void setContrasena(String contrasena) {
+        this.contrasena = contrasena;
+    }
+
+    public RolAcceso getRolAcceso() {
+        return rolAcceso;
+    }
+
+    public void setRolAcceso(RolAcceso rolAcceso) {
+        this.rolAcceso = rolAcceso;
     }
 
     public Rol getRol() {

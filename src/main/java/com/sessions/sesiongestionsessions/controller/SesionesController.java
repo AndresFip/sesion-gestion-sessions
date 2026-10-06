@@ -27,4 +27,12 @@ public class SesionesController {
     public Sesiones crearSesion(@RequestBody Sesiones sesion) {
         return sesionService.crearSesion(sesion);
     }
+
+    @PutMapping("/{id}/estado")
+    public Sesiones actualizarEstado(@PathVariable Long id, @RequestParam String estado) {
+        Sesiones sesion = sesionesRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sesión no encontrada"));
+        sesion.setEstado(Sesiones.Estado.valueOf(estado));
+        return sesionesRepository.save(sesion);
+    }
 }

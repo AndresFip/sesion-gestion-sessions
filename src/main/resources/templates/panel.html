@@ -1,43 +1,333 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Sesiones</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
-<body>
-<h1>Panel de Sesiones</h1>
 
-<h2>Sesiones existentes</h2>
-<table border="1">
-    <tr>
-        <th>ID</th>
-        <th>Estado</th>
-        <th>Fecha Inicio</th>
-        <th>Fecha Fin</th>
-        <th>Ingeniero</th>
-        <th>Técnico</th>
-    </tr>
-    <tr th:each="sesion : ${sesiones}">
-        <td th:text="${sesion.id}"></td>
-        <td th:text="${sesion.estado}"></td>
-        <td th:text="${sesion.fechaInicio}"></td>
-        <td th:text="${sesion.fechaFin}"></td>
-        <td th:text="${sesion.ingeniero.nombre}"></td>
-        <td th:text="${sesion.tecnico != null ? sesion.tecnico.nombre : 'Sin asignar'}"></td>
-    </tr>
-</table>
+<body class="bg-light">
 
-<h2>Crear nueva sesión</h2>
-<form th:action="@{/panel/crear}" method="post">
-    Fecha inicio: <input type="datetime-local" name="fechaInicio" required><br>
-    Fecha fin: <input type="datetime-local" name="fechaFin" required><br>
-    Ingeniero:
-    <select name="ingenieroId" required>
-        <option th:each="ing : ${ingenieros}"
-                th:value="${ing.id}"
-                th:text="${ing.nombre}"></option>
-    </select><br>
-    <button type="submit">Crear sesión</button>
-</form>
+<div class="container my-4">
+
+    <div class="d-flex justify-content-end align-items-center mb-2">
+    <span class="text-muted small me-3">
+        <span th:text="${session.usuarioNombre}"></span> (<span th:text="${session.rolAcceso}"></span>)
+    </span>
+        <a href="/logout" class="small">Cerrar sesión</a>
+    </div>
+
+    <!-- Encabezado superior -->
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-3 shadow-sm border">
+        <div>
+            <h2 class="fw-bold mb-0 text-dark">Panel de Sesiones</h2>
+            <p class="text-muted small mb-0">Gestión de actividades</p>
+        </div>
+        <a href="/panel/nueva" class="btn btn-success d-flex align-items-center gap-2 px-3 py-2 shadow-sm"
+           th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+            <i class="bi bi-plus-circle-fill"></i> Crear nueva sesión
+        </a>
+    </div>
+    <a href="/panel/usuarios" class="btn btn-outline-dark btn-sm mb-3"
+       th:if="${session.rolAcceso.name() == 'ADMIN'}">
+        <i class="bi bi-people"></i> Gestión de usuarios
+    </a>
+
+    <!-- Tarjeta Principal con Pestañas -->
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white border-bottom pt-3 pb-0">
+            <ul class="nav nav-tabs card-header-tabs" id="sesionesTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold text-dark" id="todas-tab" data-bs-toggle="tab" data-bs-target="#todas" type="button" role="tab">
+                        <i class="bi bi-list-task me-1"></i> Todas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-warning" id="pendientes-tab" data-bs-toggle="tab" data-bs-target="#pendientes" type="button" role="tab">
+                        <i class="bi bi-clock-history me-1"></i> Pendientes
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-primary" id="proceso-tab" data-bs-toggle="tab" data-bs-target="#proceso" type="button" role="tab">
+                        <i class="bi bi-play-circle me-1"></i> En Proceso
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold text-success" id="finalizadas-tab" data-bs-toggle="tab" data-bs-target="#finalizadas" type="button" role="tab">
+                        <i class="bi bi-check-circle me-1"></i> Finalizadas
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="tab-content" id="sesionesTabsContent">
+
+                <!-- TODAS LAS SESIONES -->
+                <div class="tab-pane fade show active" id="todas" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Tipo Sesión</th>
+                                <th>#Ticket</th>
+                                <th>Estado</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Ing. Principal</th>
+                                <th>Técnico</th>
+                                <th>Observaciones</th>
+                                <th>Ing. Responsable</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="sesion : ${sesiones}">
+                                <td th:text="${sesion.tipoSesion}"
+                                    th:classappend="${sesion.tipoSesion == null} ? '' : (${sesion.tipoSesion.name() == 'Sesion_Cliente'} ? 'table-info' : 'table-warning')"></td>
+                                <td th:text="${sesion.ticket}"></td>
+                                <td th:text="${sesion.estado}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaInicio, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaFin, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${sesion.ingeniero.nombre}"></td>
+                                <td th:text="${sesion.tecnicoNombre}"></td>
+                                <td th:text="${sesion.observaciones}"></td>
+                                <td th:text="${sesion.ingenieroResponsable}"></td>
+                                <td class="text-center">
+                                    <a th:href="@{/panel/editar/{id}(id=${sesion.id})}" class="btn btn-sm btn-outline-warning"
+                                       th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PENDIENTES -->
+                <div class="tab-pane fade" id="pendientes" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Tipo Sesión</th>
+                                <th>#Ticket</th>
+                                <th>Estado</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Ing. Principal</th>
+                                <th>Técnico</th>
+                                <th>Observaciones</th>
+                                <th>Ing. Responsable</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="sesion : ${pendiente}">
+                                <td th:text="${sesion.tipoSesion}"
+                                    th:classappend="${sesion.tipoSesion == null} ? '' : (${sesion.tipoSesion.name() == 'Sesion_Cliente'} ? 'table-info' : 'table-warning')"></td>
+                                <td th:text="${sesion.ticket}"></td>
+                                <td th:text="${sesion.estado}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaInicio, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaFin, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${sesion.ingeniero.nombre}"></td>
+                                <td th:text="${sesion.tecnicoNombre}"></td>
+                                <td th:text="${sesion.observaciones}"></td>
+                                <td th:text="${sesion.ingenieroResponsable}"></td>
+                                <td class="text-center">
+                                    <a th:href="@{/panel/editar/{id}(id=${sesion.id})}" class="btn btn-sm btn-outline-warning"
+                                       th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- EN PROCESO -->
+                <div class="tab-pane fade" id="proceso" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Tipo Sesión</th>
+                                <th>#Ticket</th>
+                                <th>Estado</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Ing. Principal</th>
+                                <th>Técnico</th>
+                                <th>Observaciones</th>
+                                <th>Ing. Responsable</th>
+                                <th>Tiempo transcurrido</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="sesion : ${en_proceso}">
+                                <td th:text="${sesion.tipoSesion}"
+                                    th:classappend="${sesion.tipoSesion == null} ? '' : (${sesion.tipoSesion.name() == 'Sesion_Cliente'} ? 'table-info' : 'table-warning')"></td>
+                                <td th:text="${sesion.ticket}"></td>
+                                <td th:text="${sesion.estado}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaInicio, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaFin, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${sesion.ingeniero.nombre}"></td>
+                                <td th:text="${sesion.tecnicoNombre}"></td>
+                                <td th:text="${sesion.observaciones}"></td>
+                                <td th:text="${sesion.ingenieroResponsable}"></td>
+                                <td>
+                                    <span class="cronometro" th:attr="data-inicio=${sesion.fechaInicio}"></span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-1">
+                                        <a th:href="@{/panel/editar/{id}(id=${sesion.id})}" class="btn btn-sm btn-outline-warning" title="Editar"
+                                           th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form th:action="@{/panel/finalizar/{id}(id=${sesion.id})}" method="post" class="d-inline"
+                                              th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FINALIZADAS -->
+                <div class="tab-pane fade" id="finalizadas" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Tipo Sesión</th>
+                                <th>#Ticket</th>
+                                <th>Estado</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Ing. Principal</th>
+                                <th>Técnico</th>
+                                <th>Observaciones</th>
+                                <th>Ing. Responsable</th>
+                                <th>Duración</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="sesion : ${finalizado}">
+                                <td th:text="${sesion.tipoSesion}"
+                                    th:classappend="${sesion.tipoSesion == null} ? '' : (${sesion.tipoSesion.name() == 'Sesion_Cliente'} ? 'table-info' : 'table-warning')"></td>
+                                <td th:text="${sesion.ticket}"></td>
+                                <td th:text="${sesion.estado}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaInicio, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${#temporals.format(sesion.fechaFin, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td th:text="${sesion.ingeniero.nombre}"></td>
+                                <td th:text="${sesion.tecnicoNombre}"></td>
+                                <td th:text="${sesion.observaciones}"></td>
+                                <td th:text="${sesion.ingenieroResponsable}"></td>
+                                <td th:text="${sesion.duracionMinutos} + ' min'"></td>
+                                <td class="text-center">
+                                    <a th:href="@{/panel/editar/{id}(id=${sesion.id})}" class="btn btn-sm btn-outline-warning"
+                                       th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<button
+        class="btn btn-dark position-fixed top-50 start-0 translate-middle-y rounded-0 rounded-end shadow z-3 p-2"
+        type="button"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#panelInformacion"
+        aria-controls="panelInformacion"
+        title="Lista de Ingenieros">
+    &#10095;
+</button>
+
+<!-- Panel Lateral Offcanvas -->
+<div class="offcanvas offcanvas-start shadow" tabindex="-1" id="panelInformacion" aria-labelledby="panelLabel">
+    <div class="offcanvas-header bg-dark text-white">
+        <h5 class="offcanvas-title fw-bold" id="panelLabel">
+            <i class="bi bi-people-fill me-2"></i>Ingenieros
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body">
+        <p class="text-muted small">Resumen de sesiones asignadas por ingeniero:</p>
+        <ul class="list-group list-group-flush border-top border-bottom">
+            <li class="list-group-item d-flex justify-content-between fw-bold bg-light py-2">
+                <span>Nombre Ing.</span>
+                <span>Sesiones</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-3"
+                th:each="entrada : ${conteoIngenieros}">
+                <span th:text="${entrada.key.nombre}" class="fw-medium text-dark"></span>
+                <span class="badge bg-primary rounded-pill px-3 py-2" th:text="${entrada.value}"></span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const activeTabId = localStorage.getItem('activeTabSesiones');
+
+        if (activeTabId) {
+            const tabToActivate = document.getElementById(activeTabId);
+            if (tabToActivate) {
+                const tab = new bootstrap.Tab(tabToActivate);
+                tab.show();
+            }
+        }
+
+        const tabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabButtons.forEach(function (button) {
+            button.addEventListener('shown.bs.tab', function (event) {
+                localStorage.setItem('activeTabSesiones', event.target.id);
+            });
+        });
+    });
+
+    function actualizarCronometros() {
+        document.querySelectorAll('.cronometro').forEach(function(el) {
+            if (!el.dataset.inicio) return;
+            const inicio = new Date(el.dataset.inicio);
+            const ahora = new Date();
+            const minutos = Math.floor((ahora - inicio) / 60000);
+
+            el.textContent = minutos + " min";
+
+            if (minutos >= 60) {
+                el.classList.add('text-danger', 'fw-bold');
+            }
+        });
+    }
+
+    setInterval(actualizarCronometros, 1000);
+    actualizarCronometros();
+
+    setInterval(function() {
+        location.reload();
+    }, 30000);
+</script>
+
 </body>
 </html>

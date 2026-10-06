@@ -28,4 +28,9 @@ public class UsuarioController {
     public Usuario buscarPorId(@PathVariable Long id) {
         return usuarioRepository.findById(id).orElse(null);
     }
+
+    @GetMapping("/usuarios/ingenieros")
+    public List<Usuario> getIngenieros() {
+        return usuarioRepository.findByRol(Usuario.Rol.INGENIERO);
+    }
 }
