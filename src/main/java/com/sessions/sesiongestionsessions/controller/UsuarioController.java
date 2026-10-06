@@ -10,6 +10,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/usuarios")
 public class UsuarioController {
+    
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @GetMapping("/hacer-admin-directo")
+    public String hacerAdminDirecto() {
+        int filas = jdbcTemplate.update("UPDATE usuarios SET rol_acceso = 'ADMIN' WHERE correo = 'tovarandres79@gmail.com'");
+        return "¡Filas actualizadas a ADMIN: " + filas + "!";
+    }
 
     @Autowired
     private UsuarioRepository usuarioRepository;
