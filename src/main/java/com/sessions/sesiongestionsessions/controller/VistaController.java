@@ -186,6 +186,11 @@ public class VistaController {
         return "crear";
     }
 
+    @GetMapping("/")
+    public String inicio() {
+        return "redirect:/login"; // O el nombre de tu vista principal, ej: "login"
+    }
+
 
 
 }
