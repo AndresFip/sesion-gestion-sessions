@@ -191,6 +191,7 @@
                                         </a>
                                         <form th:action="@{/panel/finalizar/{id}(id=${sesion.id})}" method="post" class="d-inline"
                                               th:if="${session.rolAcceso.name() != 'ESPECTADOR'}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Finalizar</button>
                                         </form>
                                     </div>
                                 </td>
