@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Sesiones</title>
+</head>
+<body>
+<h1>Panel de Sesiones</h1>
+
+<h2>Sesiones existentes</h2>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Estado</th>
+        <th>Fecha Inicio</th>
+        <th>Fecha Fin</th>
+        <th>Ingeniero</th>
+        <th>Técnico</th>
+    </tr>
+    <tr th:each="sesion : ${sesiones}">
+        <td th:text="${sesion.id}"></td>
+        <td th:text="${sesion.estado}"></td>
+        <td th:text="${sesion.fechaInicio}"></td>
+        <td th:text="${sesion.fechaFin}"></td>
+        <td th:text="${sesion.ingeniero.nombre}"></td>
+        <td th:text="${sesion.tecnico != null ? sesion.tecnico.nombre : 'Sin asignar'}"></td>
+    </tr>
+</table>
+
+<h2>Crear nueva sesión</h2>
+<form th:action="@{/panel/crear}" method="post">
+    Fecha inicio: <input type="datetime-local" name="fechaInicio" required><br>
+    Fecha fin: <input type="datetime-local" name="fechaFin" required><br>
+    Ingeniero:
+    <select name="ingenieroId" required>
+        <option th:each="ing : ${ingenieros}"
+                th:value="${ing.id}"
+                th:text="${ing.nombre}"></option>
+    </select><br>
+    <button type="submit">Crear sesión</button>
+</form>
+</body>
+</html>
